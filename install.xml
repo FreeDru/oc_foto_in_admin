@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+  <name>Foto_in_admin</name>
+  <version>1.0</version>
+  <author>Drujban</author>
+  <code>foto_in_admin</code>
+  <file path="admin/controller/sale/order.php">
+    <operation error="abort">
+      <search>
+        <![CDATA[
+        public function info() {
+        ]]>
+      </search>
+      <add position="after">
+        <![CDATA[
+        $this->document->addStyle('view/javascript/cloud-zoom/cloud-zoom.css');
+        $this->document->addScript('view/javascript/cloud-zoom/cloud-zoom.1.0.2.js');
+        ]]>
+      </add>
+    </operation>
+    <operation error="abort">
+      <search>
+      	<![CDATA[
+        $data['products'][] = array(
+        ]]>
+      </search>
+      <add position="before">
+      	<![CDATA[
+        $this->load->model('tool/image');
+        $this->load->model('catalog/product');
+        $product_info = $this->model_catalog_product->getProduct($product['product_id']);
+        $image = $this->model_tool_image->resize($product_info['image'], 50, 50);
+        $image_big = $this->model_tool_image->resize($product_info['image'], 400, 400);
+       ]]>
+      </add>
+    </operation>  
+    <operation error="abort">
+      <search>
+        <![CDATA[
+        $data['products'][] = array(
+        ]]>
+      </search>
+      <add position="replace" offset="10">
+        <![CDATA[
+        $data['products'][] = array(
+        'order_product_id' => $product['order_product_id'],
+        'product_id'       => $product['product_id'],
+        'name'             => $product['name'],
+        'image'            => $image,
+        'image_big'        => $image_big,
+        'model'            => $product['model'],
+        'option'           => $option_data,
+        'quantity'         => $product['quantity'],
+        'price'            => $this->currency->format($product['price'] + ($this->config->get('config_tax') ? $product['tax'] : 0), $order_info['currency_code'], $order_info['currency_value']),
+        'total'            => $this->currency->format($product['total'] + ($this->config->get('config_tax') ? ($product['tax'] * $product['quantity']) : 0), $order_info['currency_code'], $order_info['currency_value']),
+        'href'             => $this->url->link('catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product['product_id'], true),
+        'href_shop'        => HTTP_CATALOG . 'index.php?route=product/product&product_id=' . $product['product_id']
+        );
+        ]]>
+      </add>
+    </operation>
+  </file>
+  <file path="admin/language/ru-ru/sale/order.php">
+  	<operation error="abort">
+  		<search>
+  			<![CDATA[
+        $_['column_order_id']            = '№ Заказа';
+        ]]>
+  		</search>
+  		<add position="before">
+  			<![CDATA[
+        $_['column_foto'] 		         = 'Фото товара';
+        ]]>	
+  		</add>
+  	</operation>
+  </file>
+  <file path="admin/view/template/sale/order_info.twig">
+    <operation error="abort">
+      <search>
+        <![CDATA[
+        <td class="text-left">{{ column_product }}</td>
+        ]]>
+      </search>
+      <add position="before">
+        <![CDATA[
+        <td class="text-left">{{ column_foto }}</td>
+        ]]>
+      </add>
+    </operation>
+    <operation error="abort">
+      <search>
+        <![CDATA[
+        {% for product in products %}
+        ]]>
+      </search>
+      <add position="replace" offset="12">
+        <![CDATA[
+        {% for product in products %}
+          <tr>
+            <td class="zoom" onclick="window.open('{{ product.href_shop }}', '_blank')"><a href="{{ product.image_big }}" class="cloud-zoom"><img class="zoom" src="{{ product.image }}"></a></td>
+            <td class="text-left"><a href="{{ product.href }}">{{ product.name }}</a> {% for option in product.option %} <br />
+              {% if option.type != 'file' %}
+              &nbsp;<small> - {{ option.name }}: {{ option.value }}</small> {% else %}
+              &nbsp;<small> - {{ option.name }}: <a href="{{ option.href }}">{{ option.value }}</a></small> {% endif %}
+              {% endfor %}</td>
+            <td class="text-left">{{ product.model }}</td>
+            <td class="text-right">{{ product.quantity }}</td>
+            <td class="text-right">{{ product.price }}</td>
+            <td class="text-right">{{ product.total }}</td>
+          </tr>
+          {% endfor %}
+        ]]>
+      </add>
+    </operation>
+    <operation error="abort">
+      <search>
+        <![CDATA[
+       {% for total in totals %}
+        ]]>
+      </search>
+      <add position="replace" offset="5">
+        <![CDATA[
+       {% for total in totals %}
+          <tr>
+            <td colspan="5" class="text-right">{{ total.title }}</td>
+            <td class="text-right">{{ total.text }}</td>
+          </tr>
+          {% endfor %}
+        ]]>
+      </add>
+    </operation>
+  </file>
+</modification>
